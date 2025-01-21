@@ -1,7 +1,14 @@
 extern crate serde;
 extern crate serde_json;
 
+use std::os::fd::AsRawFd;
 use serde::{Deserialize, Serialize};
+use nix::{
+    fcntl::{open, OFlag},
+    sys::stat::Mode,
+    ioctl_write_int_bad,
+    unistd::sleep
+};
 
 #[derive(Serialize, Deserialize)]
 struct Person {
@@ -9,33 +16,37 @@ struct Person {
     age: u8,
 }
 
-// Function hello_rust_cargo without manglng
+// Function hello_rust_cargo without mangling
 #[no_mangle]
 pub extern "C" fn hello_rust_cargo_main() {
-    ////
-    use std::os::fd::AsRawFd;
-    use nix::fcntl::{open, OFlag};
-    use nix::sys::stat::Mode;
-    use nix::ioctl_write_int_bad;
-    use nix::unistd::sleep;
-    let fd = open(
-        "/dev/userleds",
-        OFlag::O_WRONLY,
-        Mode::empty()
-    ).unwrap();
-    println!("fd={:?}", fd);
 
-    const ULEDIOC_SETALL: i32 = 0x1d03;
-    ioctl_write_int_bad!(led_set_all, ULEDIOC_SETALL);
+    // Open the LED Device for NuttX
+    let fd = open(        // Equivalent to NuttX open()
+        "/dev/userleds",  // LED Device
+        OFlag::O_WRONLY,  // Write Only
+        Mode::empty()     // No Modes
+    ).unwrap();           // Halt on Error
 
-    // Equivalent to ioctl(fd, ULEDIOC_SETALL, 1)
-    unsafe { led_set_all(fd.as_raw_fd(), 1).unwrap(); }
+    // Define the ioctl() function for Flipping LEDs
+    const ULEDIOC_SETALL: i32 = 0x1d03;  // ioctl() Command
+    ioctl_write_int_bad!(  // ioctl() will write One Int Value (LED Bit State)
+        led_set_all,       // Name of our New Function
+        ULEDIOC_SETALL     // ioctl() Command to send
+    );
 
+    // Flip LED 1 to On
+    unsafe {             // Be careful of ioctl()
+    led_set_all(         // Set the LEDs for...
+        fd.as_raw_fd(),  // LED Device
+        1                // LED 1 (Bit 0) turns On
+    ).unwrap();          // Halt on Error
+    }  // Equivalent to ioctl(fd, ULEDIOC_SETALL, 1)
+
+    // Wait 2 seconds
     sleep(2);
 
-    // Equivalent to ioctl(fd, ULEDIOC_SETALL, 0)
+    // Flip LED 1 to Off: ioctl(fd, ULEDIOC_SETALL, 0)
     unsafe { led_set_all(fd.as_raw_fd(), 0).unwrap(); }
-    ////
 
     // Print hello world to stdout
 
@@ -75,6 +86,7 @@ pub extern "C" fn hello_rust_cargo_main() {
             println!("Hello world from tokio!");
         });
 
+    println!("Looping Forever...");
     loop {
         // Do nothing
     }
