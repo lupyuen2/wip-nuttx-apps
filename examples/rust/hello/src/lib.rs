@@ -49,7 +49,6 @@ pub extern "C" fn hello_rust_cargo_main() {
     unsafe { led_set_all(fd.as_raw_fd(), 0).unwrap(); }
 
     // Print hello world to stdout
-
     let john = Person {
         name: "John".to_string(),
         age: 30,
@@ -78,45 +77,61 @@ pub extern "C" fn hello_rust_cargo_main() {
     let pretty_json_str = serde_json::to_string_pretty(&alice).unwrap();
     println!("Pretty JSON:\n{}", pretty_json_str);
 
+    // Run 4 Async Functions in the Background
     test_async();
 }
 
+// Run 4 Async Functions in the Background
+// By creating One New NuttX Thread
 // Based on https://tokio.rs/tokio/topics/bridging
 fn test_async() {
-    println!("Running test_async...");
-    let runtime = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(1)
-        .enable_all()
-        .build()
-        .unwrap();
 
+    // Create a Multi-Threaded Scheduler
+    // Containing One New NuttX Thread
+    let runtime = tokio::runtime::Builder
+        ::new_multi_thread() // Multi-Threaded Scheduler
+        .worker_threads(1)   // With One New NuttX Thread for our Scheduler
+        .enable_all() // Enable the I/O and Time Functions
+        .build()      // Create the Multi-Threaded Scheduler
+        .unwrap();    // Halt on Error
+  
+    // Create 4 Async Functions
+    // Remember their Async Handles
     let mut handles = Vec::with_capacity(4);
     for i in 0..4 {
-        handles.push(runtime.spawn(my_bg_task(i)));
+        handles.push(            // Remember the Async Handles
+            runtime.spawn(       // Start in the Background
+                my_bg_task(i))); // Our Async Function
     }
-
-    // Do something time-consuming while the background tasks execute.
-    std::thread::sleep(tokio::time::Duration::from_millis(750));
+  
+    // Pretend to be busy while Async Functions execute (in the background)
+    // We wait 750 milliseconds
+    std::thread::sleep(
+          tokio::time::Duration::from_millis(750));
     println!("Finished time-consuming task.");
-
-    // Wait for all of them to complete.
+  
+    // Wait for All Async Functions to complete
     for handle in handles {
-        // The `spawn` method returns a `JoinHandle`. A `JoinHandle` is
-        // a future, so we can wait for it using `block_on`.
-        runtime.block_on(handle).unwrap();
+        runtime
+            .block_on(handle)  // Wait for One Async Function to complete
+            .unwrap();
     }
-}
-
+  }
+  
+// Our Async Function that runs in the background...
+// If i=0: Sleep for 1000 ms
+// If i=1: Sleep for  950 ms
+// If i=2: Sleep for  900 ms
+// If i=3: Sleep for  850 ms
 async fn my_bg_task(i: u64) {
-    // By subtracting, the tasks with larger values of i sleep for a
-    // shorter duration.
     let millis = 1000 - 50 * i;
     println!("Task {} sleeping for {} ms.", i, millis);
-
-    tokio::time::sleep(tokio::time::Duration::from_millis(millis)).await;
-
+    tokio::time::sleep(
+        tokio::time::Duration::from_millis(millis)
+    ).await;  // Wait for sleep to complete
     println!("Task {} stopping.", i);
 }
 
+// Needed by Tokio Multi-Threaded Scheduler
 #[no_mangle]
 pub extern "C" fn pthread_set_name_np() {}
