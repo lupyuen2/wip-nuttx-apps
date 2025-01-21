@@ -78,23 +78,44 @@ pub extern "C" fn hello_rust_cargo_main() {
     let pretty_json_str = serde_json::to_string_pretty(&alice).unwrap();
     println!("Pretty JSON:\n{}", pretty_json_str);
 
-    // Multi-Thread
-    tokio::runtime::Builder::new_multi_thread()
+    test_async();
+}
+
+// Based on https://tokio.rs/tokio/topics/bridging
+fn test_async() {
+    println!("Running test_async...");
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(1)
         .enable_all()
         .build()
-        .unwrap()
-        .block_on(async {
-            println!("Hello world from tokio!");
-            println!("1111111111111111111111");
-            println!("2222222222222222222222");
-            println!("3333333333333333333333");
-            println!("4444444444444444444444");
-        });
+        .unwrap();
 
-    println!("Looping Forever...");
-    loop {
-        // Do nothing
+    let mut handles = Vec::with_capacity(4);
+    for i in 0..4 {
+        handles.push(runtime.spawn(my_bg_task(i)));
     }
+
+    // Do something time-consuming while the background tasks execute.
+    std::thread::sleep(tokio::time::Duration::from_millis(750));
+    println!("Finished time-consuming task.");
+
+    // Wait for all of them to complete.
+    for handle in handles {
+        // The `spawn` method returns a `JoinHandle`. A `JoinHandle` is
+        // a future, so we can wait for it using `block_on`.
+        runtime.block_on(handle).unwrap();
+    }
+}
+
+async fn my_bg_task(i: u64) {
+    // By subtracting, the tasks with larger values of i sleep for a
+    // shorter duration.
+    let millis = 1000 - 50 * i;
+    println!("Task {} sleeping for {} ms.", i, millis);
+
+    tokio::time::sleep(tokio::time::Duration::from_millis(millis)).await;
+
+    println!("Task {} stopping.", i);
 }
 
 #[no_mangle]
