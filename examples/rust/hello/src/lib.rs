@@ -78,12 +78,17 @@ pub extern "C" fn hello_rust_cargo_main() {
     let pretty_json_str = serde_json::to_string_pretty(&alice).unwrap();
     println!("Pretty JSON:\n{}", pretty_json_str);
 
-    tokio::runtime::Builder::new_current_thread()
+    // Multi-Thread
+    tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
         .block_on(async {
             println!("Hello world from tokio!");
+            println!("1111111111111111111111");
+            println!("2222222222222222222222");
+            println!("3333333333333333333333");
+            println!("4444444444444444444444");
         });
 
     println!("Looping Forever...");
@@ -91,3 +96,6 @@ pub extern "C" fn hello_rust_cargo_main() {
         // Do nothing
     }
 }
+
+#[no_mangle]
+pub extern "C" fn pthread_set_name_np() {}
