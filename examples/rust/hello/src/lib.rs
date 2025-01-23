@@ -48,7 +48,7 @@ pub extern "C" fn hello_rust_cargo_main() {
     // Flip LED 1 to Off: ioctl(fd, ULEDIOC_SETALL, 0)
     unsafe { led_set_all(fd.as_raw_fd(), 0).unwrap(); }
 
-    // Print hello world to stdout
+    // Serialize and Deserialize JSON
     let john = Person {
         name: "John".to_string(),
         age: 30,
