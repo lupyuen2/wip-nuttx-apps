@@ -35,11 +35,11 @@ pub extern "C" fn hello_rust_cargo_main() {
     );
 
     // Flip LED 1 to On
-    unsafe {             // Be careful of ioctl()
-    led_set_all(         // Set the LEDs for...
-        fd.as_raw_fd(),  // LED Device
-        1                // LED 1 (Bit 0) turns On
-    ).unwrap();          // Halt on Error
+    unsafe {               // Be careful of ioctl()
+      led_set_all(         // Set the LEDs for...
+          fd.as_raw_fd(),  // LED Device
+          1                // LED 1 (Bit 0) turns On
+      ).unwrap();          // Halt on Error
     }  // Equivalent to ioctl(fd, ULEDIOC_SETALL, 1)
 
     // Wait 2 seconds
