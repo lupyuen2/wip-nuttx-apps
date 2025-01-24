@@ -2,13 +2,13 @@ extern crate serde;
 extern crate serde_json;
 
 use std::os::fd::AsRawFd;
-use serde::{Deserialize, Serialize};
 use nix::{
     fcntl::{open, OFlag},
-    sys::stat::Mode,
     ioctl_write_int_bad,
+    sys::stat::Mode,
     unistd::sleep
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 struct Person {
@@ -35,11 +35,11 @@ pub extern "C" fn hello_rust_cargo_main() {
     );
 
     // Flip LED 1 to On
-    unsafe {               // Be careful of ioctl()
-      led_set_all(         // Set the LEDs for...
-          fd.as_raw_fd(),  // LED Device
-          1                // LED 1 (Bit 0) turns On
-      ).unwrap();          // Halt on Error
+    unsafe {                 // Be careful of ioctl()
+        led_set_all(         // Set the LEDs for...
+            fd.as_raw_fd(),  // LED Device
+            1                // LED 1 (Bit 0) turns On
+        ).unwrap();          // Halt on Error
     }  // Equivalent to ioctl(fd, ULEDIOC_SETALL, 1)
 
     // Wait 2 seconds
