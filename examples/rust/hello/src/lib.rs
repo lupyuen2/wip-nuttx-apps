@@ -1,5 +1,5 @@
 //! Read the article: "Rust Standard Library on Apache NuttX RTOS"
-//! https://lupyuen.org
+//! https://lupyuen.org/articles/rust7.html
 
 extern crate serde;
 extern crate serde_json;
