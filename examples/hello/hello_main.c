@@ -38,5 +38,12 @@
 int main(int argc, FAR char *argv[])
 {
   printf("Hello, World!!\n");
+
+  //// Begin Debug
+  puts("0");
+  for (uint32_t i = 0; i < 40000000; i++) { asm("nop"); }
+  puts("1");
+  //// End Debug
+
   return 0;
 }
